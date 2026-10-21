@@ -7,7 +7,15 @@ import {
   Text,
   ViewStyle,
 } from 'react-native';
-import { colors, controlHeight, fontSize, radius, spacing } from '../../theme';
+import { LucideIcon } from 'lucide-react-native';
+import {
+  colors,
+  controlHeight,
+  fontSize,
+  iconSize,
+  radius,
+  spacing,
+} from '../../theme';
 
 type Variant =
   | 'default'
@@ -19,7 +27,9 @@ type Variant =
 type Size = 'sm' | 'md' | 'lg' | 'icon' | 'iconSm';
 
 type Props = {
+  /** Shown as text, or used as the accessibility label for icon-only sizes. */
   label: string;
+  icon?: LucideIcon;
   onPress: () => void;
   variant?: Variant;
   size?: Size;
@@ -40,6 +50,7 @@ const textColor: Record<Variant, string> = {
 
 export default function Button({
   label,
+  icon: Icon,
   onPress,
   variant = 'default',
   size = 'md',
@@ -49,18 +60,16 @@ export default function Button({
   style,
 }: Props) {
   const inactive = disabled || loading;
+  const iconOnly = size === 'icon' || size === 'iconSm';
+  const color = textColor[variant];
   return (
     <Pressable
       onPress={onPress}
       disabled={inactive}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={accessibilityLabel ?? (iconOnly ? label : undefined)}
       accessibilityState={{ disabled: inactive, busy: loading }}
-      hitSlop={
-        size === 'icon' || size === 'iconSm' || variant === 'link'
-          ? 8
-          : undefined
-      }
+      hitSlop={iconOnly || variant === 'link' ? 8 : undefined}
       style={({ pressed }) => [
         styles.base,
         styles[size],
@@ -71,18 +80,25 @@ export default function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColor[variant]} />
+        <ActivityIndicator color={color} />
       ) : (
-        <Text
-          style={[
-            styles.label,
-            size === 'sm' && styles.labelSm,
-            (size === 'icon' || size === 'iconSm') && styles.labelIcon,
-            { color: textColor[variant] },
-          ]}
-        >
-          {label}
-        </Text>
+        <>
+          {Icon ? (
+            <Icon
+              color={color}
+              size={
+                size === 'sm' || size === 'iconSm' ? iconSize.sm : iconSize.md
+              }
+            />
+          ) : null}
+          {iconOnly ? null : (
+            <Text
+              style={[styles.label, size === 'sm' && styles.labelSm, { color }]}
+            >
+              {label}
+            </Text>
+          )}
+        </>
       )}
     </Pressable>
   );
@@ -93,6 +109,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'transparent',
@@ -145,9 +162,6 @@ const styles = StyleSheet.create({
   },
   labelSm: {
     fontSize: fontSize.sm,
-  },
-  labelIcon: {
-    fontSize: fontSize.lg,
   },
 });
 

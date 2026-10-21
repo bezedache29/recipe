@@ -19,6 +19,7 @@ const FiltersContext = createContext<FiltersContextValue | null>(null);
 
 export const countActiveFilters = (filters: RecipeFilters) =>
   filters.categories.length +
+  filters.balances.length +
   filters.cookingMethodIds.length +
   filters.ingredientIds.length +
   (filters.maxPrepMinutes != null ? 1 : 0) +

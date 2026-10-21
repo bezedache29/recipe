@@ -1,5 +1,8 @@
 export type Category = 'entree' | 'plat' | 'dessert' | 'encas';
 
+/** How light or indulgent a recipe is. */
+export type Balance = 'healthy' | 'normal' | 'rich';
+
 export type CookingMethod = {
   id: number;
   name: string;
@@ -21,6 +24,7 @@ export type RecipeSummary = {
   title: string;
   photoPath: string | null;
   category: Category;
+  balance: Balance;
   prepMinutes: number | null;
   isFavorite: boolean;
   cookingNames: string[];
@@ -38,6 +42,7 @@ export type RecipeInput = {
   title: string;
   photoPath: string | null;
   category: Category;
+  balance: Balance;
   prepMinutes: number | null;
   isFavorite: boolean;
   cookingMethodIds: number[];
@@ -50,6 +55,8 @@ export type SortOrder = 'recent' | 'title' | 'prep';
 export type RecipeFilters = {
   search: string;
   categories: Category[];
+  /** Recipes with any of these balances. */
+  balances: Balance[];
   /** Recipes using at least one of these cooking methods. */
   cookingMethodIds: number[];
   /** Recipes containing all of these ingredients. */

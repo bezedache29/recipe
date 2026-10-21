@@ -1,4 +1,4 @@
-import { Category, RecipeFilters, SortOrder } from './types';
+import { Balance, Category, RecipeFilters, SortOrder } from './types';
 
 export const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'entree', label: 'Entrée' },
@@ -9,6 +9,15 @@ export const CATEGORIES: { value: Category; label: string }[] = [
 
 export const categoryLabel = (category: Category) =>
   CATEGORIES.find(c => c.value === category)?.label ?? category;
+
+export const BALANCES: { value: Balance; label: string }[] = [
+  { value: 'healthy', label: 'Healthy' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'rich', label: 'Riche' },
+];
+
+export const balanceLabel = (balance: Balance) =>
+  BALANCES.find(b => b.value === balance)?.label ?? balance;
 
 export const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'recent', label: 'Plus récentes' },
@@ -22,6 +31,7 @@ export const PREP_TIME_OPTIONS = [15, 30, 45, 60, 90];
 export const EMPTY_FILTERS: RecipeFilters = {
   search: '',
   categories: [],
+  balances: [],
   cookingMethodIds: [],
   ingredientIds: [],
   maxPrepMinutes: null,

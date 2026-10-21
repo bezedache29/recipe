@@ -1,3 +1,4 @@
+import { X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -144,10 +145,10 @@ export default function CookingMethodsScreen() {
                 </Text>
               </View>
               <Button
-                label="✕"
+                label={`Supprimer ${item.name}`}
+                icon={X}
                 variant="ghost"
                 size="icon"
-                accessibilityLabel={`Supprimer ${item.name}`}
                 onPress={() => confirmDelete(item)}
               />
             </Pressable>

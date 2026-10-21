@@ -1,11 +1,18 @@
+import { Star } from 'lucide-react-native';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Input from '../components/ui/Input';
-import { CATEGORIES, PREP_TIME_OPTIONS, SORT_OPTIONS } from '../constants';
-import { categoryColors, colors, fontSize, spacing } from '../theme';
+import { balanceIcons } from '../components/balanceIcons';
+import {
+  BALANCES,
+  CATEGORIES,
+  PREP_TIME_OPTIONS,
+  SORT_OPTIONS,
+} from '../constants';
+import { categoryColors, colors, fonts, fontSize, spacing } from '../theme';
 import { useFilters } from '../context/FiltersContext';
 import {
   CookingMethodWithUsage,
@@ -82,9 +89,9 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
         <Text style={styles.section}>Favoris</Text>
         <View style={styles.chips}>
           <Chip
-            label="★ Uniquement mes favoris"
+            label="Uniquement mes favoris"
             color={colors.accent}
-            showDot={false}
+            icon={Star}
             selected={filters.favoritesOnly}
             onPress={() =>
               updateFilters({ favoritesOnly: !filters.favoritesOnly })
@@ -104,6 +111,21 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
                 updateFilters({
                   categories: toggle(filters.categories, c.value),
                 })
+              }
+            />
+          ))}
+        </View>
+
+        <Text style={styles.section}>Équilibre</Text>
+        <View style={styles.chips}>
+          {BALANCES.map(b => (
+            <Chip
+              key={b.value}
+              label={b.label}
+              icon={balanceIcons[b.value]}
+              selected={filters.balances.includes(b.value)}
+              onPress={() =>
+                updateFilters({ balances: toggle(filters.balances, b.value) })
               }
             />
           ))}
@@ -205,7 +227,7 @@ const styles = StyleSheet.create({
   },
   section: {
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: fonts.headingMedium,
     color: colors.foreground,
     marginTop: spacing.xl,
     marginBottom: spacing.md,

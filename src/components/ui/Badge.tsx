@@ -1,16 +1,25 @@
+import { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, radius, spacing } from '../../theme';
+import { colors, fontSize, iconSize, radius, spacing } from '../../theme';
 
 type Props = {
   label: string;
+  icon?: LucideIcon;
   /** Fills the badge with this colour (e.g. a category colour). */
   color?: string;
   variant?: 'secondary' | 'outline';
 };
 
 /** Small read-only label, for tags like category or preparation time. */
-export default function Badge({ label, color, variant = 'secondary' }: Props) {
+export default function Badge({
+  label,
+  icon: Icon,
+  color,
+  variant = 'secondary',
+}: Props) {
+  const textColor =
+    color != null ? colors.primaryForeground : colors.foreground;
   return (
     <View
       style={[
@@ -19,15 +28,17 @@ export default function Badge({ label, color, variant = 'secondary' }: Props) {
         color != null && { backgroundColor: color, borderColor: color },
       ]}
     >
-      <Text style={[styles.label, color != null && styles.filledLabel]}>
-        {label}
-      </Text>
+      {Icon ? <Icon color={textColor} size={iconSize.sm - 2} /> : null}
+      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     alignSelf: 'flex-start',
     borderRadius: radius.full,
     borderWidth: 1,
@@ -42,11 +53,7 @@ const styles = StyleSheet.create({
     borderColor: colors.input,
   },
   label: {
-    color: colors.foreground,
     fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  filledLabel: {
-    color: colors.primaryForeground,
   },
 });

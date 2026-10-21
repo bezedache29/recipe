@@ -1,18 +1,26 @@
+import { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, controlHeight, fontSize, radius, spacing } from '../../theme';
+import {
+  colors,
+  controlHeight,
+  fontSize,
+  iconSize,
+  radius,
+  spacing,
+} from '../../theme';
 
 type Props = {
   label: string;
   selected: boolean;
   onPress: () => void;
   /**
-   * Colour of the option (e.g. its category). Shown as a dot when off,
-   * and fills the chip when on. Defaults to the primary colour.
+   * Colour of the option (e.g. its category). Shown as a dot (or tints the
+   * icon) when off, and fills the chip when on. Defaults to the primary colour.
    */
   color?: string;
-  /** Set to false when the label already carries a symbol (e.g. ★). */
-  showDot?: boolean;
+  /** Replaces the colour dot. */
+  icon?: LucideIcon;
 };
 
 /** Toggleable pill used for filters and multiple-choice fields. */
@@ -21,7 +29,7 @@ export default function Chip({
   selected,
   onPress,
   color,
-  showDot = true,
+  icon: Icon,
 }: Props) {
   const fill = color ?? colors.primary;
   return (
@@ -35,7 +43,14 @@ export default function Chip({
         pressed && !selected && styles.pressed,
       ]}
     >
-      {color && showDot && !selected ? (
+      {Icon ? (
+        <Icon
+          size={iconSize.sm}
+          color={selected ? colors.primaryForeground : fill}
+          fill={selected ? colors.primaryForeground : 'transparent'}
+          style={styles.icon}
+        />
+      ) : color && !selected ? (
         <View style={[styles.dot, { backgroundColor: color }]} />
       ) : null}
       <Text style={[styles.label, selected && styles.selectedLabel]}>
@@ -59,6 +74,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: colors.muted,
+  },
+  icon: {
+    marginRight: spacing.xs + 2,
   },
   dot: {
     width: 8,

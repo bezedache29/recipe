@@ -1,5 +1,6 @@
 import { Scalar, Transaction } from '@op-engineering/op-sqlite';
 import {
+  Balance,
   Category,
   Recipe,
   RecipeFilters,
@@ -16,7 +17,8 @@ const likePattern = (value: string) =>
   `%${value.replace(/[\\%_]/g, c => `\\${c}`)}%`;
 
 const SUMMARY_COLUMNS = `
-  r.id, r.title, r.photo_path, r.category, r.prep_minutes, r.is_favorite,
+  r.id, r.title, r.photo_path, r.category, r.balance, r.prep_minutes,
+  r.is_favorite,
   (SELECT GROUP_CONCAT(cm.name, '|')
      FROM recipe_cooking_methods rcm
      JOIN cooking_methods cm ON cm.id = rcm.cooking_method_id
@@ -27,6 +29,7 @@ const toSummary = (row: Record<string, Scalar>): RecipeSummary => ({
   title: String(row.title),
   photoPath: row.photo_path ? String(row.photo_path) : null,
   category: row.category as Category,
+  balance: row.balance as Balance,
   prepMinutes: row.prep_minutes == null ? null : Number(row.prep_minutes),
   isFavorite: Number(row.is_favorite) === 1,
   cookingNames: row.cooking_names ? String(row.cooking_names).split('|') : [],
@@ -43,6 +46,7 @@ const ORDER_BY: Record<RecipeFilters['sort'], string> = {
  * Builds the WHERE clause from the filters. Every active filter narrows the
  * results (AND), except inside a group where it makes sense to widen:
  * - categories: any of the selected ones
+ * - balances: any of the selected ones
  * - cooking methods: any of the selected ones
  * - ingredients: ALL of the selected ones ("I have chicken AND rice")
  */
@@ -65,6 +69,11 @@ export const searchRecipes = async (
   if (filters.categories.length > 0) {
     where.push(`r.category IN (${placeholders(filters.categories.length)})`);
     params.push(...filters.categories);
+  }
+
+  if (filters.balances.length > 0) {
+    where.push(`r.balance IN (${placeholders(filters.balances.length)})`);
+    params.push(...filters.balances);
   }
 
   if (filters.cookingMethodIds.length > 0) {
@@ -202,13 +211,14 @@ export const createRecipe = async (input: RecipeInput): Promise<number> => {
     const now = Date.now();
     const result = await tx.execute(
       `INSERT INTO recipes
-        (title, title_key, photo_path, category, prep_minutes, is_favorite, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        (title, title_key, photo_path, category, balance, prep_minutes, is_favorite, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.title.trim(),
         toSearchKey(input.title),
         input.photoPath,
         input.category,
+        input.balance,
         input.prepMinutes,
         input.isFavorite ? 1 : 0,
         now,
@@ -225,7 +235,7 @@ export const updateRecipe = async (id: number, input: RecipeInput) => {
   await getDb().transaction(async tx => {
     await tx.execute(
       `UPDATE recipes SET
-        title = ?, title_key = ?, photo_path = ?, category = ?,
+        title = ?, title_key = ?, photo_path = ?, category = ?, balance = ?,
         prep_minutes = ?, is_favorite = ?, updated_at = ?
        WHERE id = ?`,
       [
@@ -233,6 +243,7 @@ export const updateRecipe = async (id: number, input: RecipeInput) => {
         toSearchKey(input.title),
         input.photoPath,
         input.category,
+        input.balance,
         input.prepMinutes,
         input.isFavorite ? 1 : 0,
         Date.now(),

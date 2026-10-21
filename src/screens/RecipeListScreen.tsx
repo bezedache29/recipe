@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { ChefHat, Plus, Star } from 'lucide-react-native';
 import React, {
   useCallback,
   useEffect,
@@ -23,7 +24,9 @@ import {
   categoryColors,
   colors,
   controlHeight,
+  fonts,
   fontSize,
+  iconSize,
   radius,
   spacing,
 } from '../theme';
@@ -122,9 +125,9 @@ export default function RecipeListScreen({
           contentContainerStyle={styles.quickFilters}
         >
           <Chip
-            label="★ Favoris"
+            label="Favoris"
             color={colors.accent}
-            showDot={false}
+            icon={Star}
             selected={filters.favoritesOnly}
             onPress={() =>
               updateFilters({ favoritesOnly: !filters.favoritesOnly })
@@ -168,6 +171,11 @@ export default function RecipeListScreen({
         ListEmptyComponent={
           totalCount === 0 ? (
             <View style={styles.emptyBox}>
+              <ChefHat
+                color={colors.mutedForeground}
+                size={iconSize.lg * 2}
+                style={styles.emptyIcon}
+              />
               <Text style={styles.emptyTitle}>
                 Aucune recette pour l'instant
               </Text>
@@ -208,7 +216,7 @@ export default function RecipeListScreen({
         accessibilityRole="button"
         accessibilityLabel="Ajouter une recette"
       >
-        <Text style={styles.fabText}>+</Text>
+        <Plus color={colors.primaryForeground} size={iconSize.lg + 4} />
       </Pressable>
     </View>
   );
@@ -249,7 +257,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.foreground,
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontFamily: fonts.headingMedium,
   },
   empty: {
     textAlign: 'center',
@@ -273,9 +281,7 @@ const styles = StyleSheet.create({
   fabPressed: {
     opacity: 0.85,
   },
-  fabText: {
-    color: colors.primaryForeground,
-    fontSize: 32,
-    lineHeight: 36,
+  emptyIcon: {
+    marginBottom: spacing.lg,
   },
 });

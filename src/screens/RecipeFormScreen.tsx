@@ -1,17 +1,34 @@
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  Camera,
+  ChevronDown,
+  ChevronUp,
+  Image as ImageIcon,
+  Plus,
+  Star,
+  X,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Input from '../components/ui/Input';
-import { CATEGORIES } from '../constants';
-import { categoryColors, colors, fontSize, radius, spacing } from '../theme';
+import { balanceIcons } from '../components/balanceIcons';
+import { BALANCES, CATEGORIES } from '../constants';
+import {
+  categoryColors,
+  colors,
+  fonts,
+  fontSize,
+  radius,
+  spacing,
+} from '../theme';
 import { listCookingMethods } from '../db/cookingMethods';
 import { listIngredients } from '../db/ingredients';
 import { createRecipe, getRecipe, updateRecipe } from '../db/recipes';
 import { ScreenProps } from '../navigation/types';
-import { Category, CookingMethod, Ingredient } from '../types';
+import { Balance, Category, CookingMethod, Ingredient } from '../types';
 import {
   deletePhoto,
   photoUri,
@@ -43,6 +60,7 @@ export default function RecipeFormScreen({
   const [title, setTitle] = useState('');
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
+  const [balance, setBalance] = useState<Balance>('normal');
   const [prepText, setPrepText] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [cookingMethodIds, setCookingMethodIds] = useState<number[]>([]);
@@ -90,6 +108,7 @@ export default function RecipeFormScreen({
       setTitle(recipe.title);
       setPhotoPath(recipe.photoPath);
       setCategory(recipe.category);
+      setBalance(recipe.balance);
       setPrepText(recipe.prepMinutes == null ? '' : String(recipe.prepMinutes));
       setIsFavorite(recipe.isFavorite);
       setCookingMethodIds(recipe.cookingMethodIds);
@@ -229,6 +248,7 @@ export default function RecipeFormScreen({
       title,
       photoPath,
       category,
+      balance,
       prepMinutes,
       isFavorite,
       cookingMethodIds,
@@ -288,13 +308,15 @@ export default function RecipeFormScreen({
       ) : null}
       <View style={styles.row}>
         <Button
-          label="📷 Prendre"
+          label="Prendre"
+          icon={Camera}
           variant="outline"
           style={styles.flex}
           onPress={() => choosePhoto('camera')}
         />
         <Button
-          label="🖼️ Galerie"
+          label="Galerie"
+          icon={ImageIcon}
           variant="outline"
           style={styles.flex}
           onPress={() => choosePhoto('library')}
@@ -310,6 +332,19 @@ export default function RecipeFormScreen({
             color={categoryColors[c.value]}
             selected={category === c.value}
             onPress={() => edit(setCategory)(c.value)}
+          />
+        ))}
+      </View>
+
+      <Text style={styles.label}>Équilibre</Text>
+      <View style={styles.chips}>
+        {BALANCES.map(b => (
+          <Chip
+            key={b.value}
+            label={b.label}
+            icon={balanceIcons[b.value]}
+            selected={balance === b.value}
+            onPress={() => edit(setBalance)(b.value)}
           />
         ))}
       </View>
@@ -352,9 +387,9 @@ export default function RecipeFormScreen({
 
       <View style={[styles.chips, styles.favorite]}>
         <Chip
-          label={isFavorite ? '★ Favori' : '☆ Ajouter aux favoris'}
+          label={isFavorite ? 'Favori' : 'Ajouter aux favoris'}
           color={colors.accent}
-          showDot={false}
+          icon={Star}
           selected={isFavorite}
           onPress={() => edit(setIsFavorite)(!isFavorite)}
         />
@@ -379,10 +414,10 @@ export default function RecipeFormScreen({
               placeholder="Quantité"
             />
             <Button
-              label="✕"
+              label="Retirer l'ingrédient"
+              icon={X}
               variant="ghost"
               size="icon"
-              accessibilityLabel="Retirer l'ingrédient"
               onPress={() =>
                 edit(setIngredients)(
                   ingredients.length > 1
@@ -407,7 +442,8 @@ export default function RecipeFormScreen({
         </View>
       ))}
       <Button
-        label="+ Ajouter un ingrédient"
+        label="Ajouter un ingrédient"
+        icon={Plus}
         variant="secondary"
         size="sm"
         style={styles.addButton}
@@ -431,26 +467,26 @@ export default function RecipeFormScreen({
           />
           <View>
             <Button
-              label="▲"
+              label="Monter l'étape"
+              icon={ChevronUp}
               variant="ghost"
               size="iconSm"
               disabled={index === 0}
-              accessibilityLabel="Monter l'étape"
               onPress={() => moveStep(index, -1)}
             />
             <Button
-              label="▼"
+              label="Descendre l'étape"
+              icon={ChevronDown}
               variant="ghost"
               size="iconSm"
               disabled={index === steps.length - 1}
-              accessibilityLabel="Descendre l'étape"
               onPress={() => moveStep(index, 1)}
             />
             <Button
-              label="✕"
+              label="Retirer l'étape"
+              icon={X}
               variant="ghost"
               size="iconSm"
-              accessibilityLabel="Retirer l'étape"
               onPress={() =>
                 edit(setSteps)(
                   steps.length > 1
@@ -463,7 +499,8 @@ export default function RecipeFormScreen({
         </View>
       ))}
       <Button
-        label="+ Ajouter une étape"
+        label="Ajouter une étape"
+        icon={Plus}
         variant="secondary"
         size="sm"
         style={styles.addButton}
@@ -494,7 +531,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.base,
-    fontWeight: '600',
+    fontFamily: fonts.headingMedium,
     color: colors.foreground,
     marginTop: spacing.xl,
     marginBottom: spacing.sm,

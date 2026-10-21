@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { Clock, Star } from 'lucide-react-native';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   Alert,
@@ -10,11 +11,20 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { categoryLabel } from '../constants';
+import { balanceIcons } from '../components/balanceIcons';
+import { balanceLabel, categoryLabel } from '../constants';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { categoryColors, colors, fontSize, radius, spacing } from '../theme';
+import {
+  categoryColors,
+  colors,
+  fonts,
+  fontSize,
+  iconSize,
+  radius,
+  spacing,
+} from '../theme';
 import { deleteRecipe, getRecipe, setFavorite } from '../db/recipes';
 import { ScreenProps } from '../navigation/types';
 import { Recipe } from '../types';
@@ -65,9 +75,11 @@ export default function RecipeDetailScreen({
               recipe.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'
             }
           >
-            <Text style={[styles.star, recipe.isFavorite && styles.starActive]}>
-              {recipe.isFavorite ? '★' : '☆'}
-            </Text>
+            <Star
+              size={iconSize.lg}
+              color={recipe.isFavorite ? colors.accent : colors.mutedForeground}
+              fill={recipe.isFavorite ? colors.accent : 'transparent'}
+            />
           </Pressable>
         ) : null,
     });
@@ -121,7 +133,13 @@ export default function RecipeDetailScreen({
             label={categoryLabel(recipe.category)}
             color={categoryColors[recipe.category]}
           />
-          {prep ? <Badge label={`⏱ ${prep}`} /> : null}
+          {prep ? <Badge label={prep} icon={Clock} /> : null}
+          {recipe.balance !== 'normal' ? (
+            <Badge
+              label={balanceLabel(recipe.balance)}
+              icon={balanceIcons[recipe.balance]}
+            />
+          ) : null}
           {recipe.cookingNames.map(name => (
             <Badge key={name} label={name} variant="outline" />
           ))}
@@ -195,7 +213,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSize.xxl,
-    fontWeight: '700',
+    fontFamily: fonts.heading,
     color: colors.foreground,
   },
   tags: {
@@ -204,16 +222,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm - 2,
     marginTop: spacing.md,
   },
-  star: {
-    fontSize: fontSize.xxl,
-    color: colors.mutedForeground,
-  },
-  starActive: {
-    color: colors.accent,
-  },
   section: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontFamily: fonts.headingMedium,
     color: colors.foreground,
     marginTop: spacing.xl,
     marginBottom: spacing.md,

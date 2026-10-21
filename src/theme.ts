@@ -56,6 +56,21 @@ export const fontSize = {
   xxl: 26,
 };
 
+export const iconSize = {
+  sm: 16,
+  md: 20,
+  lg: 24,
+};
+
+/**
+ * Titles use Bricolage Grotesque (files in android/app/src/main/assets/fonts),
+ * body text keeps the system font for readability.
+ */
+export const fonts = {
+  heading: 'BricolageGrotesque-Bold',
+  headingMedium: 'BricolageGrotesque-SemiBold',
+};
+
 /** Heights shared by buttons, inputs and chips so rows line up. */
 export const controlHeight = {
   sm: 36,

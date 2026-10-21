@@ -1,10 +1,20 @@
+import { Star, UtensilsCrossed } from 'lucide-react-native';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { categoryLabel } from '../constants';
-import { categoryColors, colors, fontSize, radius, spacing } from '../theme';
+import { balanceLabel, categoryLabel } from '../constants';
+import {
+  categoryColors,
+  colors,
+  fonts,
+  fontSize,
+  iconSize,
+  radius,
+  spacing,
+} from '../theme';
 import { RecipeSummary } from '../types';
 import { photoUri } from '../utils/photos';
 import { formatMinutes } from '../utils/text';
+import { balanceIcons } from './balanceIcons';
 import Card from './ui/Card';
 
 type Props = {
@@ -23,6 +33,7 @@ export default function RecipeCard({
     recipe.cookingNames.join(', '),
   ].filter(Boolean);
   const categoryColor = categoryColors[recipe.category];
+  const BalanceIcon = balanceIcons[recipe.balance];
 
   return (
     <Card onPress={onPress} style={styles.card}>
@@ -33,7 +44,10 @@ export default function RecipeCard({
         />
       ) : (
         <View style={[styles.photo, styles.noPhoto]}>
-          <Text style={styles.noPhotoText}>🍽️</Text>
+          <UtensilsCrossed
+            color={colors.mutedForeground}
+            size={iconSize.lg + 4}
+          />
         </View>
       )}
       <View style={styles.body}>
@@ -45,6 +59,16 @@ export default function RecipeCard({
           <Text style={[styles.category, { color: categoryColor }]}>
             {categoryLabel(recipe.category)}
           </Text>
+          {recipe.balance !== 'normal' ? (
+            <>
+              <BalanceIcon
+                color={colors.mutedForeground}
+                size={iconSize.sm - 2}
+                style={styles.balanceIcon}
+              />
+              <Text style={styles.balance}>{balanceLabel(recipe.balance)}</Text>
+            </>
+          ) : null}
         </View>
         {details.length > 0 ? (
           <Text style={styles.details} numberOfLines={1}>
@@ -60,9 +84,11 @@ export default function RecipeCard({
         }
         style={styles.favorite}
       >
-        <Text style={[styles.star, recipe.isFavorite && styles.starActive]}>
-          {recipe.isFavorite ? '★' : '☆'}
-        </Text>
+        <Star
+          size={iconSize.lg}
+          color={recipe.isFavorite ? colors.accent : colors.input}
+          fill={recipe.isFavorite ? colors.accent : 'transparent'}
+        />
       </Pressable>
     </Card>
   );
@@ -85,16 +111,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  noPhotoText: {
-    fontSize: fontSize.xxl,
-  },
   body: {
     flex: 1,
     marginLeft: spacing.md,
   },
   title: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontFamily: fonts.headingMedium,
     color: colors.foreground,
   },
   categoryRow: {
@@ -112,6 +135,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
+  balanceIcon: {
+    marginLeft: spacing.md,
+    marginRight: spacing.xs,
+  },
+  balance: {
+    fontSize: fontSize.sm,
+    color: colors.mutedForeground,
+  },
   details: {
     marginTop: 2,
     fontSize: fontSize.sm,
@@ -119,12 +150,5 @@ const styles = StyleSheet.create({
   },
   favorite: {
     paddingHorizontal: spacing.sm,
-  },
-  star: {
-    fontSize: fontSize.xxl,
-    color: colors.input,
-  },
-  starActive: {
-    color: colors.accent,
   },
 });

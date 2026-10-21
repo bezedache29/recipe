@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { colors } from '../theme';
+import { colors, fonts, fontSize } from '../theme';
 import CookingMethodsScreen from '../screens/CookingMethodsScreen';
 import FiltersScreen from '../screens/FiltersScreen';
 import RecipeDetailScreen from '../screens/RecipeDetailScreen';
@@ -16,6 +16,7 @@ export default function RootNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.foreground,
+        headerTitleStyle: { fontFamily: fonts.heading, fontSize: fontSize.xl },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
       }}

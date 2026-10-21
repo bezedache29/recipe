@@ -65,6 +65,12 @@ const MIGRATIONS: string[][] = [
       ('Micro-ondes', 'micro-ondes'),
       ('Sans cuisson', 'sans cuisson')`,
   ],
+  // v2 — healthy / normal / rich; existing recipes become "normal"
+  [
+    `ALTER TABLE recipes ADD COLUMN balance TEXT NOT NULL DEFAULT 'normal'
+      CHECK (balance IN ('healthy', 'normal', 'rich'))`,
+    'CREATE INDEX idx_recipes_balance ON recipes (balance)',
+  ],
 ];
 
 let db: DB | null = null;
