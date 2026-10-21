@@ -277,5 +277,18 @@ describe('updates and deletions', () => {
     expect((await listIngredients()).map(i => i.name)).not.toContain(
       'Pommes de terre',
     );
+    // Permanent delete: nothing linked to the recipe is left behind.
+    for (const table of [
+      'recipe_categories',
+      'recipe_cooking_methods',
+      'recipe_ingredients',
+      'steps',
+    ]) {
+      const { rows } = await getDb().execute(
+        `SELECT COUNT(*) AS n FROM ${table} WHERE recipe_id = ?`,
+        [gratinId],
+      );
+      expect(Number(rows[0].n)).toBe(0);
+    }
   });
 });

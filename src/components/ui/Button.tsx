@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -64,7 +65,11 @@ export default function Button({
   const color = textColor[variant];
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        // Leaves the text field being edited, like a tap on empty space.
+        Keyboard.dismiss();
+        onPress();
+      }}
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? (iconOnly ? label : undefined)}

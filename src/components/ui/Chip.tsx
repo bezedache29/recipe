@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   colors,
   controlHeight,
@@ -34,7 +34,11 @@ export default function Chip({
   const fill = color ?? colors.primary;
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        // Leaves the text field being edited, like a tap on empty space.
+        Keyboard.dismiss();
+        onPress();
+      }}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       style={({ pressed }) => [
