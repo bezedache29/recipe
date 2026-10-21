@@ -33,7 +33,7 @@ const search = async (filters: Partial<RecipeFilters>) =>
 const recipe = (overrides: Partial<RecipeInput>): RecipeInput => ({
   title: 'Sans titre',
   photoPath: null,
-  category: 'plat',
+  categories: ['plat'],
   balance: 'normal',
   prepMinutes: null,
   isFavorite: false,
@@ -53,7 +53,7 @@ beforeAll(async () => {
   gratinId = await createRecipe(
     recipe({
       title: 'Gratin dauphinois',
-      category: 'plat',
+      categories: ['plat'],
       balance: 'rich',
       prepMinutes: 30,
       cookingMethodIds: [four],
@@ -67,7 +67,7 @@ beforeAll(async () => {
   await createRecipe(
     recipe({
       title: 'Omelette',
-      category: 'plat',
+      categories: ['plat'],
       prepMinutes: 10,
       isFavorite: true,
       cookingMethodIds: [poele],
@@ -80,7 +80,7 @@ beforeAll(async () => {
   await createRecipe(
     recipe({
       title: 'Crème brûlée',
-      category: 'dessert',
+      categories: ['dessert'],
       prepMinutes: 20,
       cookingMethodIds: [four, poele],
       ingredients: [
@@ -92,7 +92,7 @@ beforeAll(async () => {
   await createRecipe(
     recipe({
       title: 'Salade 100% verte',
-      category: 'entree',
+      categories: ['plat', 'entree'],
       balance: 'healthy',
     }),
   );
@@ -103,7 +103,7 @@ describe('recipes', () => {
     const r = await getRecipe(gratinId);
     expect(r).toMatchObject({
       title: 'Gratin dauphinois',
-      category: 'plat',
+      categories: ['plat'],
       balance: 'rich',
       prepMinutes: 30,
       cookingNames: ['Four'],
@@ -147,6 +147,20 @@ describe('filters', () => {
     expect(
       await search({ categories: ['dessert', 'entree'], sort: 'title' }),
     ).toEqual(['Crème brûlée', 'Salade 100% verte']);
+  });
+
+  it('finds a recipe through each of its categories', async () => {
+    expect(await search({ categories: ['plat'], sort: 'title' })).toEqual([
+      'Gratin dauphinois',
+      'Omelette',
+      'Salade 100% verte',
+    ]);
+    const [salade] = await searchRecipes({
+      ...EMPTY_FILTERS,
+      search: 'salade',
+    });
+    // Stored as plat + entree, always returned in menu order.
+    expect(salade.categories).toEqual(['entree', 'plat']);
   });
 
   it('filters by any of the selected balances', async () => {
@@ -196,6 +210,15 @@ describe('filters', () => {
 });
 
 describe('updates and deletions', () => {
+  it('replaces the categories on update', async () => {
+    const id = await createRecipe(
+      recipe({ title: 'Cake', categories: ['dessert', 'encas'] }),
+    );
+    await updateRecipe(id, recipe({ title: 'Cake', categories: ['encas'] }));
+    expect((await getRecipe(id))!.categories).toEqual(['encas']);
+    await deleteRecipe(id);
+  });
+
   it('changes the balance on update', async () => {
     const id = await createRecipe(recipe({ title: 'Tarte' }));
     await updateRecipe(id, recipe({ title: 'Tarte', balance: 'rich' }));
@@ -206,8 +229,8 @@ describe('updates and deletions', () => {
   it('gives recipes saved without a balance the normal one', async () => {
     // Same situation as recipes created before the balance column existed.
     await getDb().execute(
-      `INSERT INTO recipes (title, title_key, category, created_at, updated_at)
-       VALUES ('Ancienne', 'ancienne', 'plat', 0, 0)`,
+      `INSERT INTO recipes (title, title_key, created_at, updated_at)
+       VALUES ('Ancienne', 'ancienne', 0, 0)`,
     );
     const [old] = await searchRecipes({ ...EMPTY_FILTERS, search: 'ancienne' });
     expect(old.balance).toBe('normal');

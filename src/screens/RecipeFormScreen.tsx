@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   Image as ImageIcon,
+  Minus,
   Plus,
   Sparkles,
   Star,
@@ -15,8 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Input from '../components/ui/Input';
+import KeyboardAwareScrollView from '../components/ui/KeyboardAwareScrollView';
 import { balanceIcons } from '../components/balanceIcons';
-import { BALANCES, CATEGORIES } from '../constants';
+import { BALANCES, CATEGORIES, PREP_TIME_OPTIONS } from '../constants';
 import {
   categoryColors,
   colors,
@@ -37,12 +39,15 @@ import {
   takePhoto,
 } from '../utils/photos';
 import { generateDishPhoto, MissingApiKeyError } from '../utils/aiPhoto';
-import { toSearchKey } from '../utils/text';
+import { formatMinutes, toSearchKey } from '../utils/text';
 
 // Each row gets a stable key so React keeps the right input focused
 // when rows are added, removed or moved.
 type IngredientRow = { key: number; name: string; quantity: string };
 type StepRow = { key: number; text: string };
+
+/** Step of the - / + buttons for the preparation time. */
+const PREP_STEP = 1;
 
 let nextKey = 1;
 const newIngredientRow = (name = '', quantity = ''): IngredientRow => ({
@@ -61,9 +66,9 @@ export default function RecipeFormScreen({
 
   const [title, setTitle] = useState('');
   const [photoPath, setPhotoPath] = useState<string | null>(null);
-  const [category, setCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [balance, setBalance] = useState<Balance>('normal');
-  const [prepText, setPrepText] = useState('');
+  const [prepMinutes, setPrepMinutes] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [cookingMethodIds, setCookingMethodIds] = useState<number[]>([]);
   const [ingredients, setIngredients] = useState<IngredientRow[]>([
@@ -110,9 +115,9 @@ export default function RecipeFormScreen({
       originalPhoto.current = recipe.photoPath;
       setTitle(recipe.title);
       setPhotoPath(recipe.photoPath);
-      setCategory(recipe.category);
+      setCategories(recipe.categories);
       setBalance(recipe.balance);
-      setPrepText(recipe.prepMinutes == null ? '' : String(recipe.prepMinutes));
+      setPrepMinutes(recipe.prepMinutes);
       setIsFavorite(recipe.isFavorite);
       setCookingMethodIds(recipe.cookingMethodIds);
       setIngredients(
@@ -210,7 +215,7 @@ export default function RecipeFormScreen({
       replacePhoto(
         await generateDishPhoto({
           title,
-          category,
+          categories,
           balance,
           ingredients: ingredients.map(i => i.name),
           steps: steps.map(s => s.text),
@@ -285,20 +290,15 @@ export default function RecipeFormScreen({
       Alert.alert('Titre manquant', 'Donne un titre à ta recette.');
       return;
     }
-    if (!category) {
-      Alert.alert('Catégorie manquante', 'Choisis une catégorie.');
-      return;
-    }
-    const prepMinutes = prepText.trim() === '' ? null : parseInt(prepText, 10);
-    if (prepMinutes != null && (isNaN(prepMinutes) || prepMinutes < 0)) {
-      Alert.alert('Temps de préparation', 'Indique un nombre de minutes.');
+    if (categories.length === 0) {
+      Alert.alert('Catégorie manquante', 'Choisis au moins une catégorie.');
       return;
     }
 
     const input = {
       title,
       photoPath,
-      category,
+      categories,
       balance,
       prepMinutes,
       isFavorite,
@@ -329,7 +329,7 @@ export default function RecipeFormScreen({
   };
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.container}
       contentContainerStyle={[
         styles.content,
@@ -344,15 +344,21 @@ export default function RecipeFormScreen({
         placeholder="Ex. : Gratin dauphinois"
       />
 
-      <Text style={styles.label}>Catégorie *</Text>
+      <Text style={styles.label}>Catégories *</Text>
       <View style={styles.chips}>
         {CATEGORIES.map(c => (
           <Chip
             key={c.value}
             label={c.label}
             color={categoryColors[c.value]}
-            selected={category === c.value}
-            onPress={() => edit(setCategory)(c.value)}
+            selected={categories.includes(c.value)}
+            onPress={() =>
+              edit(setCategories)(
+                categories.includes(c.value)
+                  ? categories.filter(v => v !== c.value)
+                  : [...categories, c.value],
+              )
+            }
           />
         ))}
       </View>
@@ -397,14 +403,50 @@ export default function RecipeFormScreen({
         ))}
       </View>
 
-      <Text style={styles.label}>Temps de préparation (minutes)</Text>
-      <Input
-        style={styles.shortInput}
-        value={prepText}
-        onChangeText={text => edit(setPrepText)(text.replace(/[^0-9]/g, ''))}
-        keyboardType="number-pad"
-        placeholder="30"
-      />
+      <Text style={styles.label}>Temps de préparation</Text>
+      <View style={styles.row}>
+        <Button
+          label="Retirer une minute"
+          icon={Minus}
+          variant="outline"
+          size="icon"
+          disabled={prepMinutes == null}
+          onPress={() =>
+            edit(setPrepMinutes)(
+              prepMinutes != null && prepMinutes > PREP_STEP
+                ? prepMinutes - PREP_STEP
+                : null,
+            )
+          }
+        />
+        <Text style={[styles.prepValue, prepMinutes == null && styles.muted]}>
+          {prepMinutes == null ? 'Non renseigné' : formatMinutes(prepMinutes)}
+        </Text>
+        <Button
+          label="Ajouter une minute"
+          icon={Plus}
+          variant="outline"
+          size="icon"
+          onPress={() => edit(setPrepMinutes)((prepMinutes ?? 0) + PREP_STEP)}
+        />
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.prepShortcuts}
+        contentContainerStyle={styles.prepShortcutsContent}
+      >
+        {PREP_TIME_OPTIONS.map(minutes => (
+          <Chip
+            key={minutes}
+            label={formatMinutes(minutes) ?? `${minutes} min`}
+            selected={prepMinutes === minutes}
+            onPress={() =>
+              edit(setPrepMinutes)(prepMinutes === minutes ? null : minutes)
+            }
+          />
+        ))}
+      </ScrollView>
 
       <View style={[styles.chips, styles.favorite]}>
         <Chip
@@ -583,7 +625,7 @@ export default function RecipeFormScreen({
         style={styles.save}
         onPress={save}
       />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -652,11 +694,27 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginTop: spacing.xs,
   },
-  shortInput: {
-    width: 120,
+  prepValue: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.foreground,
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+  },
+  muted: {
+    color: colors.mutedForeground,
+    fontWeight: '400',
+  },
+  prepShortcuts: {
+    marginTop: spacing.md,
+    // Lets the row scroll edge to edge, past the form padding.
+    marginHorizontal: -spacing.lg,
+  },
+  prepShortcutsContent: {
+    paddingHorizontal: spacing.lg,
   },
   favorite: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   ingredient: {
     marginBottom: spacing.sm,

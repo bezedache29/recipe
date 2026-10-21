@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TextInputProps } from 'react-native';
 import { colors, controlHeight, fontSize, radius, spacing } from '../../theme';
+import { useRevealOnFocus } from './KeyboardAwareScrollView';
 
 /** Text field with the app's look; the border lights up while typing. */
 export default function Input({
@@ -8,9 +9,11 @@ export default function Input({
   multiline,
   onFocus,
   onBlur,
+  onContentSizeChange,
   ...props
 }: TextInputProps) {
   const [focused, setFocused] = useState(false);
+  const reveal = useRevealOnFocus();
   return (
     <TextInput
       placeholderTextColor={colors.mutedForeground}
@@ -19,11 +22,19 @@ export default function Input({
       multiline={multiline}
       onFocus={e => {
         setFocused(true);
+        reveal?.();
         onFocus?.(e);
       }}
       onBlur={e => {
         setFocused(false);
         onBlur?.(e);
+      }}
+      onContentSizeChange={e => {
+        // A growing multi-line field (e.g. a step) must stay above the keyboard.
+        if (focused && multiline) {
+          reveal?.();
+        }
+        onContentSizeChange?.(e);
       }}
       style={[
         styles.input,

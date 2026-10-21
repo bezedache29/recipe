@@ -4,7 +4,7 @@ describe('buildDishPrompt', () => {
   it('describes the dish with its course, ingredients, steps and style', () => {
     const prompt = buildDishPrompt({
       title: ' Tarte aux pommes ',
-      category: 'dessert',
+      categories: ['dessert'],
       balance: 'rich',
       ingredients: ['Pommes', ' ', 'Pâte brisée'],
       steps: ['Étaler la pâte', '', 'Napper de caramel'],
@@ -16,10 +16,21 @@ describe('buildDishPrompt', () => {
     expect(prompt).toContain('No text');
   });
 
+  it('lists every category', () => {
+    const prompt = buildDishPrompt({
+      title: 'Salade niçoise',
+      categories: ['entree', 'plat'],
+      balance: 'healthy',
+      ingredients: [],
+      steps: [],
+    });
+    expect(prompt).toContain('a homemade starter or main course');
+  });
+
   it('works with only a title', () => {
     const prompt = buildDishPrompt({
       title: 'Soupe',
-      category: null,
+      categories: [],
       balance: 'normal',
       ingredients: [''],
       steps: [],
@@ -34,7 +45,7 @@ describe('buildDishPrompt', () => {
   it('shortens very long steps', () => {
     const prompt = buildDishPrompt({
       title: 'Pot-au-feu',
-      category: 'plat',
+      categories: ['plat'],
       balance: 'normal',
       ingredients: [],
       steps: ['x'.repeat(5000)],

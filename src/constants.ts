@@ -26,7 +26,7 @@ export const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
 ];
 
 /** Shortcuts offered in the filters for the max preparation time. */
-export const PREP_TIME_OPTIONS = [15, 30, 45, 60, 90];
+export const PREP_TIME_OPTIONS = [15, 30, 45, 60, 90, 120, 150, 180];
 
 export const EMPTY_FILTERS: RecipeFilters = {
   search: '',

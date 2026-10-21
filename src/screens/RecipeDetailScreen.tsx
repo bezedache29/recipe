@@ -129,10 +129,13 @@ export default function RecipeDetailScreen({
         <Text style={styles.title}>{recipe.title}</Text>
 
         <View style={styles.tags}>
-          <Badge
-            label={categoryLabel(recipe.category)}
-            color={categoryColors[recipe.category]}
-          />
+          {recipe.categories.map(category => (
+            <Badge
+              key={category}
+              label={categoryLabel(category)}
+              color={categoryColors[category]}
+            />
+          ))}
           {prep ? <Badge label={prep} icon={Clock} /> : null}
           {recipe.balance !== 'normal' ? (
             <Badge

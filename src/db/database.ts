@@ -4,7 +4,7 @@ import { DB, open } from '@op-engineering/op-sqlite';
  * Each entry upgrades the schema by one version. Never edit an entry that has
  * already shipped: add a new one at the end instead.
  */
-const MIGRATIONS: string[][] = [
+export const MIGRATIONS: string[][] = [
   // v1 — initial schema
   [
     `CREATE TABLE recipes (
@@ -70,6 +70,18 @@ const MIGRATIONS: string[][] = [
     `ALTER TABLE recipes ADD COLUMN balance TEXT NOT NULL DEFAULT 'normal'
       CHECK (balance IN ('healthy', 'normal', 'rich'))`,
     'CREATE INDEX idx_recipes_balance ON recipes (balance)',
+  ],
+  // v3 — a recipe can belong to several categories (e.g. starter and main)
+  [
+    `CREATE TABLE recipe_categories (
+      recipe_id INTEGER NOT NULL REFERENCES recipes (id) ON DELETE CASCADE,
+      category TEXT NOT NULL CHECK (category IN ('entree', 'plat', 'dessert', 'encas')),
+      PRIMARY KEY (recipe_id, category)
+    )`,
+    'CREATE INDEX idx_rc_category ON recipe_categories (category)',
+    'INSERT INTO recipe_categories (recipe_id, category) SELECT id, category FROM recipes',
+    'DROP INDEX idx_recipes_category',
+    'ALTER TABLE recipes DROP COLUMN category',
   ],
 ];
 

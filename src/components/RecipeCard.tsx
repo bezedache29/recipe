@@ -32,7 +32,6 @@ export default function RecipeCard({
     formatMinutes(recipe.prepMinutes),
     recipe.cookingNames.join(', '),
   ].filter(Boolean);
-  const categoryColor = categoryColors[recipe.category];
   const BalanceIcon = balanceIcons[recipe.balance];
 
   return (
@@ -55,10 +54,21 @@ export default function RecipeCard({
           {recipe.title}
         </Text>
         <View style={styles.categoryRow}>
-          <View style={[styles.dot, { backgroundColor: categoryColor }]} />
-          <Text style={[styles.category, { color: categoryColor }]}>
-            {categoryLabel(recipe.category)}
-          </Text>
+          {recipe.categories.map(category => (
+            <View key={category} style={styles.categoryItem}>
+              <View
+                style={[
+                  styles.dot,
+                  { backgroundColor: categoryColors[category] },
+                ]}
+              />
+              <Text
+                style={[styles.category, { color: categoryColors[category] }]}
+              >
+                {categoryLabel(category)}
+              </Text>
+            </View>
+          ))}
           {recipe.balance !== 'normal' ? (
             <>
               <BalanceIcon
@@ -122,8 +132,14 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     marginTop: spacing.xs,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
   dot: {
     width: 8,
@@ -136,7 +152,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceIcon: {
-    marginLeft: spacing.md,
     marginRight: spacing.xs,
   },
   balance: {

@@ -23,7 +23,8 @@ export type RecipeSummary = {
   id: number;
   title: string;
   photoPath: string | null;
-  category: Category;
+  /** At least one, in the order of CATEGORIES. */
+  categories: Category[];
   balance: Balance;
   prepMinutes: number | null;
   isFavorite: boolean;
@@ -41,7 +42,8 @@ export type Recipe = RecipeSummary & {
 export type RecipeInput = {
   title: string;
   photoPath: string | null;
-  category: Category;
+  /** At least one, in the order of CATEGORIES. */
+  categories: Category[];
   balance: Balance;
   prepMinutes: number | null;
   isFavorite: boolean;

@@ -2,7 +2,7 @@ import { Balance, Category } from '../types';
 
 export type DishDetails = {
   title: string;
-  category: Category | null;
+  categories: Category[];
   balance: Balance;
   ingredients: string[];
   steps: string[];
@@ -33,7 +33,7 @@ const clean = (values: string[]) => values.map(v => v.trim()).filter(Boolean);
  */
 export const buildDishPrompt = ({
   title,
-  category,
+  categories,
   balance,
   ingredients,
   steps,
@@ -47,7 +47,9 @@ export const buildDishPrompt = ({
   }
   return [
     `Appetizing food photograph of the finished dish "${title.trim()}"${
-      category ? `, a homemade ${COURSE[category]}` : ''
+      categories.length > 0
+        ? `, a homemade ${categories.map(c => COURSE[c]).join(' or ')}`
+        : ''
     }.`,
     names.length > 0 ? `Main ingredients: ${names.join(', ')}.` : '',
     method

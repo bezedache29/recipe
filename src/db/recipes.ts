@@ -7,6 +7,7 @@ import {
   RecipeInput,
   RecipeSummary,
 } from '../types';
+import { CATEGORIES } from '../constants';
 import { toSearchKey } from '../utils/text';
 import { getDb } from './database';
 
@@ -17,18 +18,26 @@ const likePattern = (value: string) =>
   `%${value.replace(/[\\%_]/g, c => `\\${c}`)}%`;
 
 const SUMMARY_COLUMNS = `
-  r.id, r.title, r.photo_path, r.category, r.balance, r.prep_minutes,
-  r.is_favorite,
+  r.id, r.title, r.photo_path, r.balance, r.prep_minutes, r.is_favorite,
+  (SELECT GROUP_CONCAT(rc.category, '|')
+     FROM recipe_categories rc
+     WHERE rc.recipe_id = r.id) AS categories,
   (SELECT GROUP_CONCAT(cm.name, '|')
      FROM recipe_cooking_methods rcm
      JOIN cooking_methods cm ON cm.id = rcm.cooking_method_id
      WHERE rcm.recipe_id = r.id) AS cooking_names`;
 
+/** Always lists categories in the same order: starter, main, dessert, snack. */
+const sortCategories = (categories: Category[]) =>
+  CATEGORIES.map(c => c.value).filter(c => categories.includes(c));
+
 const toSummary = (row: Record<string, Scalar>): RecipeSummary => ({
   id: Number(row.id),
   title: String(row.title),
   photoPath: row.photo_path ? String(row.photo_path) : null,
-  category: row.category as Category,
+  categories: sortCategories(
+    row.categories ? (String(row.categories).split('|') as Category[]) : [],
+  ),
   balance: row.balance as Balance,
   prepMinutes: row.prep_minutes == null ? null : Number(row.prep_minutes),
   isFavorite: Number(row.is_favorite) === 1,
@@ -45,7 +54,7 @@ const ORDER_BY: Record<RecipeFilters['sort'], string> = {
 /**
  * Builds the WHERE clause from the filters. Every active filter narrows the
  * results (AND), except inside a group where it makes sense to widen:
- * - categories: any of the selected ones
+ * - categories: recipes in any of the selected ones
  * - balances: any of the selected ones
  * - cooking methods: any of the selected ones
  * - ingredients: ALL of the selected ones ("I have chicken AND rice")
@@ -67,7 +76,9 @@ export const searchRecipes = async (
   }
 
   if (filters.categories.length > 0) {
-    where.push(`r.category IN (${placeholders(filters.categories.length)})`);
+    where.push(`EXISTS (SELECT 1 FROM recipe_categories rc
+      WHERE rc.recipe_id = r.id
+        AND rc.category IN (${placeholders(filters.categories.length)}))`);
     params.push(...filters.categories);
   }
 
@@ -151,12 +162,15 @@ export const getRecipe = async (id: number): Promise<Recipe | null> => {
   };
 };
 
-/** Replaces the cooking methods, ingredients and steps of a recipe. */
+/** Replaces the categories, cooking methods, ingredients and steps of a recipe. */
 const writeChildren = async (
   tx: Transaction,
   recipeId: number,
   input: RecipeInput,
 ) => {
+  await tx.execute('DELETE FROM recipe_categories WHERE recipe_id = ?', [
+    recipeId,
+  ]);
   await tx.execute('DELETE FROM recipe_cooking_methods WHERE recipe_id = ?', [
     recipeId,
   ]);
@@ -164,6 +178,13 @@ const writeChildren = async (
     recipeId,
   ]);
   await tx.execute('DELETE FROM steps WHERE recipe_id = ?', [recipeId]);
+
+  for (const category of input.categories) {
+    await tx.execute(
+      'INSERT INTO recipe_categories (recipe_id, category) VALUES (?, ?)',
+      [recipeId, category],
+    );
+  }
 
   for (const methodId of input.cookingMethodIds) {
     await tx.execute(
@@ -211,13 +232,12 @@ export const createRecipe = async (input: RecipeInput): Promise<number> => {
     const now = Date.now();
     const result = await tx.execute(
       `INSERT INTO recipes
-        (title, title_key, photo_path, category, balance, prep_minutes, is_favorite, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (title, title_key, photo_path, balance, prep_minutes, is_favorite, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.title.trim(),
         toSearchKey(input.title),
         input.photoPath,
-        input.category,
         input.balance,
         input.prepMinutes,
         input.isFavorite ? 1 : 0,
@@ -235,14 +255,13 @@ export const updateRecipe = async (id: number, input: RecipeInput) => {
   await getDb().transaction(async tx => {
     await tx.execute(
       `UPDATE recipes SET
-        title = ?, title_key = ?, photo_path = ?, category = ?, balance = ?,
+        title = ?, title_key = ?, photo_path = ?, balance = ?,
         prep_minutes = ?, is_favorite = ?, updated_at = ?
        WHERE id = ?`,
       [
         input.title.trim(),
         toSearchKey(input.title),
         input.photoPath,
-        input.category,
         input.balance,
         input.prepMinutes,
         input.isFavorite ? 1 : 0,

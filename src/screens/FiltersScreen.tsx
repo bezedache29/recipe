@@ -1,10 +1,11 @@
 import { Star } from 'lucide-react-native';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Input from '../components/ui/Input';
+import KeyboardAwareScrollView from '../components/ui/KeyboardAwareScrollView';
 import { balanceIcons } from '../components/balanceIcons';
 import {
   BALANCES,
@@ -73,7 +74,7 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.content}>
         <Text style={styles.section}>Trier par</Text>
         <View style={styles.chips}>
           {SORT_OPTIONS.map(o => (
@@ -195,7 +196,7 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
             </View>
           </>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View
         style={[styles.footer, { paddingBottom: spacing.md + insets.bottom }]}

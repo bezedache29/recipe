@@ -66,6 +66,9 @@ src/
 - **Aucune couleur ni taille codée en dur dans les écrans** : tout vient de `src/theme.ts`.
 - Avant de créer un bouton, un champ ou une carte dans un écran, utiliser (ou compléter)
   le composant de `src/components/ui/`.
+- **Écran avec des champs de texte** : utiliser `KeyboardAwareScrollView`
+  (`src/components/ui/`) au lieu de `ScrollView`, pour que le champ actif reste au-dessus
+  du clavier.
 - **Icônes** : uniquement `lucide-react-native` (pas d'emoji ni de symbole texte comme ★ ✕).
 - **Police** : Bricolage Grotesque (`fonts.heading` / `fonts.headingMedium`) pour les titres,
   police système pour le texte courant. Les fichiers sont dans `android/app/src/main/assets/fonts/`.

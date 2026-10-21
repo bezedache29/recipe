@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
+import KeyboardAwareScrollView from '../components/ui/KeyboardAwareScrollView';
 import { colors, fonts, fontSize, spacing } from '../theme';
 import { deleteOpenAiKey, getOpenAiKey, saveOpenAiKey } from '../utils/apiKey';
 
@@ -53,7 +54,7 @@ export default function SettingsScreen() {
     ]);
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
@@ -95,7 +96,7 @@ export default function SettingsScreen() {
         style={styles.saveButton}
         onPress={save}
       />
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
