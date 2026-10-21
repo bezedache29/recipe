@@ -1,0 +1,4 @@
+<resources>
+    <!-- Same as colors.background in src/theme.ts -->
+    <color name="background">#17111C</color>
+</resources>

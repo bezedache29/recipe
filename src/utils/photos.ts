@@ -1,0 +1,62 @@
+import {
+  DocumentDirectoryPath,
+  copyFile,
+  exists,
+  mkdir,
+  unlink,
+} from '@dr.pogodin/react-native-fs';
+import {
+  ImagePickerResponse,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
+
+const PHOTOS_DIR = `${DocumentDirectoryPath}/photos`;
+
+const PICKER_OPTIONS = {
+  mediaType: 'photo',
+  maxWidth: 1600,
+  maxHeight: 1600,
+  quality: 0.8,
+} as const;
+
+/**
+ * The picker returns a temporary file that Android may clean up at any time,
+ * so it is copied into the app's private folder before being saved.
+ * Returns the stored path, or null if the user cancelled.
+ */
+const keepPickedPhoto = async (
+  response: ImagePickerResponse,
+): Promise<string | null> => {
+  if (response.didCancel) {
+    return null;
+  }
+  if (response.errorCode) {
+    throw new Error(response.errorMessage ?? response.errorCode);
+  }
+  const asset = response.assets?.[0];
+  if (!asset?.uri) {
+    return null;
+  }
+  await mkdir(PHOTOS_DIR);
+  const extension = asset.fileName?.split('.').pop() ?? 'jpg';
+  const target = `${PHOTOS_DIR}/${Date.now()}.${extension}`;
+  await copyFile(asset.uri.replace('file://', ''), target);
+  return target;
+};
+
+export const pickPhotoFromLibrary = async () =>
+  keepPickedPhoto(await launchImageLibrary(PICKER_OPTIONS));
+
+export const takePhoto = async () =>
+  keepPickedPhoto(
+    await launchCamera({ ...PICKER_OPTIONS, saveToPhotos: false }),
+  );
+
+export const deletePhoto = async (path: string | null) => {
+  if (path && (await exists(path))) {
+    await unlink(path);
+  }
+};
+
+export const photoUri = (path: string) => `file://${path}`;

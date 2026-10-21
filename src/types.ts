@@ -1,0 +1,60 @@
+export type Category = 'entree' | 'plat' | 'dessert' | 'encas';
+
+export type CookingMethod = {
+  id: number;
+  name: string;
+};
+
+export type Ingredient = {
+  id: number;
+  name: string;
+};
+
+export type RecipeIngredient = {
+  name: string;
+  quantity: string;
+};
+
+/** A recipe as shown in the list (lightweight). */
+export type RecipeSummary = {
+  id: number;
+  title: string;
+  photoPath: string | null;
+  category: Category;
+  prepMinutes: number | null;
+  isFavorite: boolean;
+  cookingNames: string[];
+};
+
+/** A recipe with everything needed for the detail and edit screens. */
+export type Recipe = RecipeSummary & {
+  cookingMethodIds: number[];
+  ingredients: RecipeIngredient[];
+  steps: string[];
+};
+
+/** What the form sends to the database (no id when creating). */
+export type RecipeInput = {
+  title: string;
+  photoPath: string | null;
+  category: Category;
+  prepMinutes: number | null;
+  isFavorite: boolean;
+  cookingMethodIds: number[];
+  ingredients: RecipeIngredient[];
+  steps: string[];
+};
+
+export type SortOrder = 'recent' | 'title' | 'prep';
+
+export type RecipeFilters = {
+  search: string;
+  categories: Category[];
+  /** Recipes using at least one of these cooking methods. */
+  cookingMethodIds: number[];
+  /** Recipes containing all of these ingredients. */
+  ingredientIds: number[];
+  maxPrepMinutes: number | null;
+  favoritesOnly: boolean;
+  sort: SortOrder;
+};
