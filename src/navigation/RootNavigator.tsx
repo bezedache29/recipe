@@ -6,6 +6,7 @@ import FiltersScreen from '../screens/FiltersScreen';
 import RecipeDetailScreen from '../screens/RecipeDetailScreen';
 import RecipeFormScreen from '../screens/RecipeFormScreen';
 import RecipeListScreen from '../screens/RecipeListScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,6 +38,11 @@ export default function RootNavigator() {
         name="CookingMethods"
         component={CookingMethodsScreen}
         options={{ title: 'Cuissons' }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Réglages' }}
       />
     </Stack.Navigator>
   );

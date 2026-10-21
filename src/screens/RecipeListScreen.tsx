@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { ChefHat, Plus, Star } from 'lucide-react-native';
+import { ChefHat, Plus, Settings, Star } from 'lucide-react-native';
 import React, {
   useCallback,
   useEffect,
@@ -77,12 +77,21 @@ export default function RecipeListScreen({
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Button
-          label="Cuissons"
-          variant="ghost"
-          size="sm"
-          onPress={() => navigation.navigate('CookingMethods')}
-        />
+        <View style={styles.headerActions}>
+          <Button
+            label="Cuissons"
+            variant="ghost"
+            size="sm"
+            onPress={() => navigation.navigate('CookingMethods')}
+          />
+          <Button
+            label="Réglages"
+            icon={Settings}
+            variant="ghost"
+            size="iconSm"
+            onPress={() => navigation.navigate('Settings')}
+          />
+        </View>
       ),
     });
   }, [navigation]);
@@ -226,6 +235,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchRow: {
     flexDirection: 'row',

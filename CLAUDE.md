@@ -1,7 +1,14 @@
 # Mes Recettes — règles du projet
 
-Application Android de recettes, React Native CLI (sans Expo), 100 % hors ligne.
+Application Android de recettes, React Native CLI (sans Expo), hors ligne.
 Les données vivent dans une base SQLite sur le téléphone (op-sqlite).
+Seule exception : la génération de photo par l'IA (OpenAI, `src/utils/aiPhoto.ts`).
+
+## Clé OpenAI
+
+- **Jamais** de clé dans le code, un fichier `.env`, la base ou la conversation.
+- Elle est saisie dans l'écran Réglages et stockée dans le Keystore Android
+  (`react-native-keychain`, voir `src/utils/apiKey.ts`).
 
 ## Façon de travailler
 

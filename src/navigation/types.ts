@@ -6,6 +6,7 @@ export type RootStackParamList = {
   RecipeForm: { id?: number };
   Filters: undefined;
   CookingMethods: undefined;
+  Settings: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =

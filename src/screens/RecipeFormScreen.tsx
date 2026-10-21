@@ -5,6 +5,7 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Plus,
+  Sparkles,
   Star,
   X,
 } from 'lucide-react-native';
@@ -35,6 +36,7 @@ import {
   pickPhotoFromLibrary,
   takePhoto,
 } from '../utils/photos';
+import { generateDishPhoto, MissingApiKeyError } from '../utils/aiPhoto';
 import { toSearchKey } from '../utils/text';
 
 // Each row gets a stable key so React keeps the right input focused
@@ -75,6 +77,7 @@ export default function RecipeFormScreen({
     null,
   );
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   // Refs so the "leave screen" listener always sees the latest values.
   const originalPhoto = useRef<string | null>(null);
@@ -172,20 +175,68 @@ export default function RecipeFormScreen({
     [navigation],
   );
 
+  const replacePhoto = (path: string) => {
+    // Replacing a photo picked during this edit: the previous one is unused.
+    if (photoPath && photoPath !== originalPhoto.current) {
+      deletePhoto(photoPath);
+    }
+    edit(setPhotoPath)(path);
+  };
+
   const choosePhoto = async (source: 'camera' | 'library') => {
     try {
       const path =
         source === 'camera' ? await takePhoto() : await pickPhotoFromLibrary();
-      if (!path) {
-        return;
+      if (path) {
+        replacePhoto(path);
       }
-      // Replacing a photo picked during this edit: the previous one is unused.
-      if (photoPath && photoPath !== originalPhoto.current) {
-        deletePhoto(photoPath);
-      }
-      edit(setPhotoPath)(path);
     } catch (e) {
       Alert.alert('Photo', `Impossible de récupérer la photo.\n${e}`);
+    }
+  };
+
+  const hasSteps = steps.some(s => s.text.trim() !== '');
+
+  const generatePhoto = async () => {
+    if (!title.trim()) {
+      Alert.alert(
+        'Titre manquant',
+        "Donne d'abord un titre à ta recette pour que l'IA sache quoi dessiner.",
+      );
+      return;
+    }
+    setGenerating(true);
+    try {
+      replacePhoto(
+        await generateDishPhoto({
+          title,
+          category,
+          balance,
+          ingredients: ingredients.map(i => i.name),
+          steps: steps.map(s => s.text),
+        }),
+      );
+    } catch (e) {
+      if (e instanceof MissingApiKeyError) {
+        Alert.alert(
+          'Clé OpenAI manquante',
+          'Ajoute ta clé OpenAI dans les réglages pour générer des photos.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            {
+              text: 'Ouvrir les réglages',
+              onPress: () => navigation.navigate('Settings'),
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          'Génération impossible',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -292,36 +343,6 @@ export default function RecipeFormScreen({
         onChangeText={edit(setTitle)}
         placeholder="Ex. : Gratin dauphinois"
       />
-
-      <Text style={styles.label}>Photo</Text>
-      {photoPath ? (
-        <View style={styles.photoBox}>
-          <Image source={{ uri: photoUri(photoPath) }} style={styles.photo} />
-          <Button
-            label="Retirer la photo"
-            variant="destructive"
-            size="sm"
-            style={styles.removePhoto}
-            onPress={removePhoto}
-          />
-        </View>
-      ) : null}
-      <View style={styles.row}>
-        <Button
-          label="Prendre"
-          icon={Camera}
-          variant="outline"
-          style={styles.flex}
-          onPress={() => choosePhoto('camera')}
-        />
-        <Button
-          label="Galerie"
-          icon={ImageIcon}
-          variant="outline"
-          style={styles.flex}
-          onPress={() => choosePhoto('library')}
-        />
-      </View>
 
       <Text style={styles.label}>Catégorie *</Text>
       <View style={styles.chips}>
@@ -507,6 +528,54 @@ export default function RecipeFormScreen({
         onPress={() => edit(setSteps)([...steps, newStepRow()])}
       />
 
+      <Text style={styles.label}>Photo</Text>
+      {photoPath ? (
+        <View style={styles.photoBox}>
+          <Image source={{ uri: photoUri(photoPath) }} style={styles.photo} />
+          <Button
+            label="Retirer la photo"
+            variant="destructive"
+            size="sm"
+            style={styles.removePhoto}
+            onPress={removePhoto}
+          />
+        </View>
+      ) : null}
+      <View style={styles.row}>
+        <Button
+          label="Prendre"
+          icon={Camera}
+          variant="outline"
+          style={styles.flex}
+          onPress={() => choosePhoto('camera')}
+        />
+        <Button
+          label="Galerie"
+          icon={ImageIcon}
+          variant="outline"
+          style={styles.flex}
+          onPress={() => choosePhoto('library')}
+        />
+      </View>
+      <Button
+        label={photoPath ? "Régénérer avec l'IA" : "Générer avec l'IA"}
+        icon={Sparkles}
+        variant="secondary"
+        loading={generating}
+        disabled={!hasSteps}
+        style={styles.generate}
+        onPress={generatePhoto}
+      />
+      {generating ? (
+        <Text style={styles.photoHint}>
+          Création de la photo… cela peut prendre jusqu'à une minute.
+        </Text>
+      ) : !hasSteps ? (
+        <Text style={styles.photoHint}>
+          Ajoute au moins une étape pour générer une photo avec l'IA.
+        </Text>
+      ) : null}
+
       <Button
         label="Enregistrer"
         size="lg"
@@ -574,6 +643,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
+  },
+  generate: {
+    marginTop: spacing.sm,
+  },
+  photoHint: {
+    color: colors.mutedForeground,
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
   },
   shortInput: {
     width: 120,
