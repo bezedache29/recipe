@@ -155,6 +155,7 @@ export default function RecipeListScreen({
       </View>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={recipes}
         keyExtractor={item => String(item.id)}
         contentContainerStyle={[

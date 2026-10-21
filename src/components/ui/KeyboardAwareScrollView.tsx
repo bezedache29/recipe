@@ -92,6 +92,7 @@ export default function KeyboardAwareScrollView({
     <RevealContext.Provider value={revealSoon}>
       <ScrollView
         ref={scrollRef}
+        showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"

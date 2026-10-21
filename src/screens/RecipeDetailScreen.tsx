@@ -29,6 +29,7 @@ import { deleteRecipe, getRecipe, setFavorite } from '../db/recipes';
 import { ScreenProps } from '../navigation/types';
 import { Recipe } from '../types';
 import { deletePhoto, photoUri } from '../utils/photos';
+import { useKeepAwake } from '../utils/keepAwake';
 import { formatMinutes } from '../utils/text';
 
 export default function RecipeDetailScreen({
@@ -38,6 +39,8 @@ export default function RecipeDetailScreen({
   const { id } = route.params;
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const insets = useSafeAreaInsets();
+  // Hands are busy while cooking: the screen must not go to sleep here.
+  useKeepAwake();
 
   const load = useCallback(async () => {
     const found = await getRecipe(id);
@@ -116,6 +119,7 @@ export default function RecipeDetailScreen({
   return (
     <ScrollView
       style={styles.container}
+      showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: spacing.xl + insets.bottom }}
     >
       {recipe.photoPath ? (

@@ -103,6 +103,7 @@ export default function CookingMethodsScreen() {
       <Text style={styles.hint}>Touche une cuisson pour la renommer.</Text>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={methods}
         keyExtractor={item => String(item.id)}
         keyboardShouldPersistTaps="handled"

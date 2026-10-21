@@ -69,6 +69,8 @@ src/
 - **Écran avec des champs de texte** : utiliser `KeyboardAwareScrollView`
   (`src/components/ui/`) au lieu de `ScrollView`, pour que le champ actif reste au-dessus
   du clavier.
+- **Pas de barre de défilement visible** : `showsVerticalScrollIndicator={false}` (et
+  `showsHorizontalScrollIndicator={false}`) sur chaque `ScrollView` / `FlatList`.
 - **Icônes** : uniquement `lucide-react-native` (pas d'emoji ni de symbole texte comme ★ ✕).
 - **Police** : Bricolage Grotesque (`fonts.heading` / `fonts.headingMedium`) pour les titres,
   police système pour le texte courant. Les fichiers sont dans `android/app/src/main/assets/fonts/`.
