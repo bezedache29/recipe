@@ -20,6 +20,7 @@ import KeyboardAwareScrollView from '../components/ui/KeyboardAwareScrollView';
 import { balanceIcons } from '../components/balanceIcons';
 import { BALANCES, CATEGORIES, PREP_TIME_OPTIONS } from '../constants';
 import {
+  balanceColors,
   categoryColors,
   colors,
   fonts,
@@ -89,6 +90,8 @@ export default function RecipeFormScreen({
   const currentPhoto = useRef<string | null>(null);
   const dirty = useRef(false);
   const saved = useRef(false);
+  /** Key of the ingredient row that must grab the focus once it appears. */
+  const focusOnMount = useRef<number | null>(null);
 
   currentPhoto.current = photoPath;
 
@@ -370,6 +373,7 @@ export default function RecipeFormScreen({
             key={b.value}
             label={b.label}
             icon={balanceIcons[b.value]}
+            color={balanceColors[b.value]}
             selected={balance === b.value}
             onPress={() => edit(setBalance)(b.value)}
           />
@@ -463,6 +467,12 @@ export default function RecipeFormScreen({
         <View key={row.key} style={styles.ingredient}>
           <View style={styles.row}>
             <Input
+              ref={input => {
+                if (input && focusOnMount.current === row.key) {
+                  focusOnMount.current = null;
+                  input.focus();
+                }
+              }}
               style={styles.ingredientName}
               value={row.name}
               onChangeText={name => updateIngredient(row.key, { name })}
@@ -510,9 +520,11 @@ export default function RecipeFormScreen({
         variant="secondary"
         size="sm"
         style={styles.addButton}
-        onPress={() =>
-          edit(setIngredients)([...ingredients, newIngredientRow()])
-        }
+        onPress={() => {
+          const row = newIngredientRow();
+          focusOnMount.current = row.key;
+          edit(setIngredients)([...ingredients, row]);
+        }}
       />
 
       <Text style={styles.label}>Étapes</Text>

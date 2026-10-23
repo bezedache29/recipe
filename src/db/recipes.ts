@@ -44,12 +44,17 @@ const toSummary = (row: Record<string, Scalar>): RecipeSummary => ({
   cookingNames: row.cooking_names ? String(row.cooking_names).split('|') : [],
 });
 
+// The id breaks ties so pages never overlap or skip a recipe.
 const ORDER_BY: Record<RecipeFilters['sort'], string> = {
-  recent: 'r.created_at DESC',
-  title: 'r.title_key ASC',
+  recent: 'r.created_at DESC, r.id DESC',
+  oldest: 'r.created_at ASC, r.id ASC',
+  title: 'r.title_key ASC, r.id ASC',
   // Recipes without a prep time go last.
-  prep: 'r.prep_minutes IS NULL, r.prep_minutes ASC, r.title_key ASC',
+  prep: 'r.prep_minutes IS NULL, r.prep_minutes ASC, r.title_key ASC, r.id ASC',
 };
+
+/** How many recipes the list loads at once. */
+export const PAGE_SIZE = 10;
 
 /**
  * Builds the WHERE clause from the filters. Every active filter narrows the
@@ -59,9 +64,7 @@ const ORDER_BY: Record<RecipeFilters['sort'], string> = {
  * - cooking methods: any of the selected ones
  * - ingredients: ALL of the selected ones ("I have chicken AND rice")
  */
-export const searchRecipes = async (
-  filters: RecipeFilters,
-): Promise<RecipeSummary[]> => {
+const buildWhere = (filters: RecipeFilters) => {
   const where: string[] = [];
   const params: Scalar[] = [];
 
@@ -111,13 +114,39 @@ export const searchRecipes = async (
     where.push('r.is_favorite = 1');
   }
 
+  return {
+    clause: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '',
+    params,
+  };
+};
+
+/** Without `page`, returns every matching recipe. */
+export const searchRecipes = async (
+  filters: RecipeFilters,
+  page?: { offset: number; limit: number },
+): Promise<RecipeSummary[]> => {
+  const { clause, params } = buildWhere(filters);
   const sql = `SELECT ${SUMMARY_COLUMNS}
     FROM recipes r
-    ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY ${ORDER_BY[filters.sort]}`;
+    ${clause}
+    ORDER BY ${ORDER_BY[filters.sort]}
+    ${page ? 'LIMIT ? OFFSET ?' : ''}`;
 
-  const { rows } = await getDb().execute(sql, params);
+  const { rows } = await getDb().execute(
+    sql,
+    page ? [...params, page.limit, page.offset] : params,
+  );
   return rows.map(toSummary);
+};
+
+/** Number of recipes matching the filters, all pages included. */
+export const countMatchingRecipes = async (filters: RecipeFilters) => {
+  const { clause, params } = buildWhere(filters);
+  const { rows } = await getDb().execute(
+    `SELECT COUNT(*) AS n FROM recipes r ${clause}`,
+    params,
+  );
+  return Number(rows[0]?.n ?? 0);
 };
 
 export const countRecipes = async () => {
@@ -128,7 +157,7 @@ export const countRecipes = async () => {
 export const getRecipe = async (id: number): Promise<Recipe | null> => {
   const db = getDb();
   const { rows } = await db.execute(
-    `SELECT ${SUMMARY_COLUMNS} FROM recipes r WHERE r.id = ?`,
+    `SELECT ${SUMMARY_COLUMNS}, r.created_at FROM recipes r WHERE r.id = ?`,
     [id],
   );
   if (rows.length === 0) {
@@ -153,6 +182,7 @@ export const getRecipe = async (id: number): Promise<Recipe | null> => {
 
   return {
     ...toSummary(rows[0]),
+    createdAt: Number(rows[0].created_at),
     cookingMethodIds: methods.rows.map(r => Number(r.cooking_method_id)),
     ingredients: ingredients.rows.map(r => ({
       name: String(r.name),

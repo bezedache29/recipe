@@ -33,6 +33,8 @@ export type RecipeSummary = {
 
 /** A recipe with everything needed for the detail and edit screens. */
 export type Recipe = RecipeSummary & {
+  /** Milliseconds since 1970, set once when the recipe is added. */
+  createdAt: number;
   cookingMethodIds: number[];
   ingredients: RecipeIngredient[];
   steps: string[];
@@ -52,7 +54,7 @@ export type RecipeInput = {
   steps: string[];
 };
 
-export type SortOrder = 'recent' | 'title' | 'prep';
+export type SortOrder = 'recent' | 'oldest' | 'title' | 'prep';
 
 export type RecipeFilters = {
   search: string;

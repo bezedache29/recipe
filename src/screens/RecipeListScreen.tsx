@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -31,7 +32,13 @@ import {
   spacing,
 } from '../theme';
 import { useFilters } from '../context/FiltersContext';
-import { countRecipes, searchRecipes, setFavorite } from '../db/recipes';
+import {
+  countMatchingRecipes,
+  countRecipes,
+  PAGE_SIZE,
+  searchRecipes,
+  setFavorite,
+} from '../db/recipes';
 import { ScreenProps } from '../navigation/types';
 import { Category, RecipeSummary } from '../types';
 
@@ -46,7 +53,13 @@ export default function RecipeListScreen({
     activeCount,
   } = useFilters();
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const loadedCount = useRef(0);
+  const loadedFilters = useRef(filters);
+  const loadingMore = useRef(false);
+  // Lets a slow query notice that a newer reload has replaced it.
+  const requestId = useRef(0);
   const [searchText, setSearchText] = useState(filters.search);
   const insets = useSafeAreaInsets();
 
@@ -58,13 +71,49 @@ export default function RecipeListScreen({
   }, [searchText]);
 
   const load = useCallback(async () => {
-    const [results, total] = await Promise.all([
-      searchRecipes(filters),
+    // Coming back from another screen keeps the recipes already loaded, so the
+    // list does not jump back to the top. New filters start again at page one.
+    const limit =
+      loadedFilters.current === filters
+        ? Math.max(PAGE_SIZE, loadedCount.current)
+        : PAGE_SIZE;
+    loadedFilters.current = filters;
+    const id = ++requestId.current;
+    const [results, matching, total] = await Promise.all([
+      searchRecipes(filters, { offset: 0, limit }),
+      countMatchingRecipes(filters),
       countRecipes(),
     ]);
+    if (id !== requestId.current) {
+      return;
+    }
+    loadedCount.current = results.length;
     setRecipes(results);
+    setMatchCount(matching);
     setTotalCount(total);
   }, [filters]);
+
+  const loadMore = async () => {
+    if (loadingMore.current || recipes.length >= matchCount) {
+      return;
+    }
+    loadingMore.current = true;
+    const id = requestId.current;
+    try {
+      const next = await searchRecipes(filters, {
+        offset: recipes.length,
+        limit: PAGE_SIZE,
+      });
+      if (id !== requestId.current) {
+        return;
+      }
+      const merged = [...recipes, ...next];
+      loadedCount.current = merged.length;
+      setRecipes(merged);
+    } finally {
+      loadingMore.current = false;
+    }
+  };
 
   // Reloads when filters change and when coming back from another screen.
   useFocusEffect(
@@ -77,21 +126,13 @@ export default function RecipeListScreen({
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={styles.headerActions}>
-          <Button
-            label="Cuissons"
-            variant="ghost"
-            size="sm"
-            onPress={() => navigation.navigate('CookingMethods')}
-          />
-          <Button
-            label="Réglages"
-            icon={Settings}
-            variant="ghost"
-            size="iconSm"
-            onPress={() => navigation.navigate('Settings')}
-          />
-        </View>
+        <Button
+          label="Réglages"
+          icon={Settings}
+          variant="ghost"
+          size="iconSm"
+          onPress={() => navigation.navigate('Settings')}
+        />
       ),
     });
   }, [navigation]);
@@ -105,7 +146,16 @@ export default function RecipeListScreen({
 
   const toggleFavorite = async (recipe: RecipeSummary) => {
     await setFavorite(recipe.id, !recipe.isFavorite);
-    load();
+    if (filters.favoritesOnly) {
+      // The recipe may have to leave the list.
+      load();
+      return;
+    }
+    setRecipes(prev =>
+      prev.map(r =>
+        r.id === recipe.id ? { ...r, isFavorite: !recipe.isFavorite } : r,
+      ),
+    );
   };
 
   const hasCriteria = activeCount > 0 || filters.search.trim() !== '';
@@ -163,11 +213,12 @@ export default function RecipeListScreen({
           { paddingBottom: 96 + insets.bottom },
         ]}
         keyboardShouldPersistTaps="handled"
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         ListHeaderComponent={
-          hasCriteria && recipes.length > 0 ? (
+          hasCriteria && matchCount > 0 ? (
             <Text style={styles.resultCount}>
-              {recipes.length} recette{recipes.length > 1 ? 's' : ''} sur{' '}
-              {totalCount}
+              {matchCount} recette{matchCount > 1 ? 's' : ''} sur {totalCount}
             </Text>
           ) : undefined
         }
@@ -236,10 +287,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   searchRow: {
     flexDirection: 'row',

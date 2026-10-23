@@ -13,14 +13,21 @@ import {
   PREP_TIME_OPTIONS,
   SORT_OPTIONS,
 } from '../constants';
-import { categoryColors, colors, fonts, fontSize, spacing } from '../theme';
+import {
+  balanceColors,
+  categoryColors,
+  colors,
+  fonts,
+  fontSize,
+  spacing,
+} from '../theme';
 import { useFilters } from '../context/FiltersContext';
 import {
   CookingMethodWithUsage,
   listCookingMethods,
 } from '../db/cookingMethods';
 import { listIngredients } from '../db/ingredients';
-import { searchRecipes } from '../db/recipes';
+import { countMatchingRecipes } from '../db/recipes';
 import { ScreenProps } from '../navigation/types';
 import { Ingredient } from '../types';
 import { formatMinutes, toSearchKey } from '../utils/text';
@@ -45,7 +52,7 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
   }, []);
 
   useEffect(() => {
-    searchRecipes(filters).then(r => setResultCount(r.length));
+    countMatchingRecipes(filters).then(setResultCount);
   }, [filters]);
 
   useLayoutEffect(() => {
@@ -124,6 +131,7 @@ export default function FiltersScreen({ navigation }: ScreenProps<'Filters'>) {
               key={b.value}
               label={b.label}
               icon={balanceIcons[b.value]}
+              color={balanceColors[b.value]}
               selected={filters.balances.includes(b.value)}
               onPress={() =>
                 updateFilters({ balances: toggle(filters.balances, b.value) })

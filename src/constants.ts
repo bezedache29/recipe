@@ -21,6 +21,7 @@ export const balanceLabel = (balance: Balance) =>
 
 export const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'recent', label: 'Plus récentes' },
+  { value: 'oldest', label: 'Plus anciennes' },
   { value: 'title', label: 'Titre A→Z' },
   { value: 'prep', label: 'Plus rapides' },
 ];

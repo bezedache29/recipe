@@ -8,6 +8,7 @@ import {
 import { getDb, initDatabase } from '../src/db/database';
 import { listIngredients } from '../src/db/ingredients';
 import {
+  countMatchingRecipes,
   createRecipe,
   deleteRecipe,
   getRecipe,
@@ -125,6 +126,46 @@ describe('recipes', () => {
 describe('filters', () => {
   it('returns everything without filters', async () => {
     expect(await search({})).toHaveLength(4);
+  });
+
+  it('lists the newest recipes first by default, the oldest on demand', async () => {
+    const newestFirst = [
+      'Salade 100% verte',
+      'Crème brûlée',
+      'Omelette',
+      'Gratin dauphinois',
+    ];
+    expect(await search({})).toEqual(newestFirst);
+    expect(await search({ sort: 'oldest' })).toEqual(
+      [...newestFirst].reverse(),
+    );
+  });
+
+  it('pages through the results without gaps or duplicates', async () => {
+    const page = async (offset: number) =>
+      (await searchRecipes(EMPTY_FILTERS, { offset, limit: 3 })).map(
+        r => r.title,
+      );
+    const all = await search({});
+    expect(await page(0)).toEqual(all.slice(0, 3));
+    expect(await page(3)).toEqual(all.slice(3));
+    expect(await page(6)).toEqual([]);
+  });
+
+  it('counts every matching recipe, not only the loaded page', async () => {
+    expect(await countMatchingRecipes(EMPTY_FILTERS)).toBe(4);
+    expect(
+      await countMatchingRecipes({ ...EMPTY_FILTERS, categories: ['plat'] }),
+    ).toBe(3);
+  });
+
+  it('reads back when a recipe was added', async () => {
+    const before = Date.now();
+    const id = await createRecipe(recipe({ title: 'Daté' }));
+    const r = await getRecipe(id);
+    expect(r!.createdAt).toBeGreaterThanOrEqual(before);
+    expect(r!.createdAt).toBeLessThanOrEqual(Date.now());
+    await deleteRecipe(id);
   });
 
   it('searches titles without caring about accents', async () => {

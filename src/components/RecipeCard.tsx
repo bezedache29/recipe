@@ -1,8 +1,10 @@
 import { Star, UtensilsCrossed } from 'lucide-react-native';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { balanceLabel, categoryLabel } from '../constants';
+import { categoryLabel } from '../constants';
 import {
+  accentEdgeWidth,
+  balanceColors,
   categoryColors,
   colors,
   fonts,
@@ -14,7 +16,6 @@ import {
 import { RecipeSummary } from '../types';
 import { photoUri } from '../utils/photos';
 import { formatMinutes } from '../utils/text';
-import { balanceIcons } from './balanceIcons';
 import Card from './ui/Card';
 
 type Props = {
@@ -32,10 +33,12 @@ export default function RecipeCard({
     formatMinutes(recipe.prepMinutes),
     recipe.cookingNames.join(', '),
   ].filter(Boolean);
-  const BalanceIcon = balanceIcons[recipe.balance];
 
   return (
-    <Card onPress={onPress} style={styles.card}>
+    <Card
+      onPress={onPress}
+      style={[styles.card, { borderLeftColor: balanceColors[recipe.balance] }]}
+    >
       {recipe.photoPath ? (
         <Image
           source={{ uri: photoUri(recipe.photoPath) }}
@@ -69,16 +72,6 @@ export default function RecipeCard({
               </Text>
             </View>
           ))}
-          {recipe.balance !== 'normal' ? (
-            <>
-              <BalanceIcon
-                color={colors.mutedForeground}
-                size={iconSize.sm - 2}
-                style={styles.balanceIcon}
-              />
-              <Text style={styles.balance}>{balanceLabel(recipe.balance)}</Text>
-            </>
-          ) : null}
         </View>
         {details.length > 0 ? (
           <Text style={styles.details} numberOfLines={1}>
@@ -110,6 +103,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.sm,
     marginBottom: spacing.md,
+    borderLeftWidth: accentEdgeWidth,
   },
   photo: {
     width: 76,
@@ -150,13 +144,6 @@ const styles = StyleSheet.create({
   category: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  balanceIcon: {
-    marginRight: spacing.xs,
-  },
-  balance: {
-    fontSize: fontSize.sm,
-    color: colors.mutedForeground,
   },
   details: {
     marginTop: 2,

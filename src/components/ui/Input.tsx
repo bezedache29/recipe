@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TextInputProps } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import { colors, controlHeight, fontSize, radius, spacing } from '../../theme';
 import { useRevealOnFocus } from './KeyboardAwareScrollView';
 
@@ -11,7 +11,7 @@ export default function Input({
   onBlur,
   onContentSizeChange,
   ...props
-}: TextInputProps) {
+}: React.ComponentProps<typeof TextInput>) {
   const [focused, setFocused] = useState(false);
   const reveal = useRevealOnFocus();
   return (

@@ -17,6 +17,7 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import {
+  balanceColors,
   categoryColors,
   colors,
   fonts,
@@ -30,7 +31,7 @@ import { ScreenProps } from '../navigation/types';
 import { Recipe } from '../types';
 import { deletePhoto, photoUri } from '../utils/photos';
 import { useKeepAwake } from '../utils/keepAwake';
-import { formatMinutes } from '../utils/text';
+import { formatDate, formatMinutes } from '../utils/text';
 
 export default function RecipeDetailScreen({
   navigation,
@@ -131,6 +132,9 @@ export default function RecipeDetailScreen({
 
       <View style={styles.content}>
         <Text style={styles.title}>{recipe.title}</Text>
+        <Text style={styles.addedOn}>
+          Ajoutée le {formatDate(recipe.createdAt)}
+        </Text>
 
         <View style={styles.tags}>
           {recipe.categories.map(category => (
@@ -145,6 +149,7 @@ export default function RecipeDetailScreen({
             <Badge
               label={balanceLabel(recipe.balance)}
               icon={balanceIcons[recipe.balance]}
+              color={balanceColors[recipe.balance]}
             />
           ) : null}
           {recipe.cookingNames.map(name => (
@@ -222,6 +227,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xxl,
     fontFamily: fonts.heading,
     color: colors.foreground,
+  },
+  addedOn: {
+    color: colors.mutedForeground,
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
   },
   tags: {
     flexDirection: 'row',

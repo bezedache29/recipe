@@ -1,16 +1,20 @@
+import { ChevronRight, CookingPot } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import KeyboardAwareScrollView from '../components/ui/KeyboardAwareScrollView';
-import { colors, fonts, fontSize, spacing } from '../theme';
+import { colors, fonts, fontSize, iconSize, spacing } from '../theme';
+import { ScreenProps } from '../navigation/types';
 import { deleteOpenAiKey, getOpenAiKey, saveOpenAiKey } from '../utils/apiKey';
 
 /** Shows only both ends of the key, enough to recognise it. */
 const maskKey = (key: string) => `${key.slice(0, 7)}…${key.slice(-4)}`;
 
-export default function SettingsScreen() {
+export default function SettingsScreen({
+  navigation,
+}: ScreenProps<'Settings'>) {
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
@@ -59,7 +63,22 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.section}>Photos générées par l'IA</Text>
+      <Text style={styles.section}>Cuissons</Text>
+      <Text style={styles.hint}>
+        Les cuissons proposées dans le formulaire et dans les filtres.
+      </Text>
+      <Card
+        style={styles.link}
+        onPress={() => navigation.navigate('CookingMethods')}
+      >
+        <CookingPot color={colors.foreground} size={iconSize.md} />
+        <Text style={styles.linkLabel}>Gérer les cuissons</Text>
+        <ChevronRight color={colors.mutedForeground} size={iconSize.md} />
+      </Card>
+
+      <Text style={[styles.section, styles.sectionSpaced]}>
+        Photos générées par l'IA
+      </Text>
       <Text style={styles.hint}>
         Ta clé OpenAI sert à créer une photo du plat depuis le formulaire. Elle
         reste chiffrée sur ce téléphone. Chaque image est facturée sur ton
@@ -115,6 +134,19 @@ const styles = StyleSheet.create({
     fontFamily: fonts.headingMedium,
     fontSize: fontSize.lg,
     color: colors.foreground,
+  },
+  sectionSpaced: {
+    marginTop: spacing.xxl,
+  },
+  link: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  linkLabel: {
+    flex: 1,
+    color: colors.foreground,
+    fontSize: fontSize.base,
   },
   hint: {
     color: colors.mutedForeground,

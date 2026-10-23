@@ -1,4 +1,4 @@
-import { Category } from './types';
+import { Balance, Category } from './types';
 
 /**
  * Single source of every visual value in the app (dark mode only).
@@ -30,6 +30,19 @@ export const categoryColors: Record<Category, string> = {
   dessert: '#FF7FB0',
   encas: '#FFC23D',
 };
+
+/**
+ * Edge of the recipe cards and balance tags. Kept away from the category
+ * colours so "healthy" is never mistaken for "starter".
+ */
+export const balanceColors: Record<Balance, string> = {
+  healthy: '#2DD4BF',
+  normal: '#6B6F7A',
+  rich: '#A855F7',
+};
+
+/** Width of the coloured edge on recipe cards. */
+export const accentEdgeWidth = 4;
 
 export const radius = {
   sm: 6,
