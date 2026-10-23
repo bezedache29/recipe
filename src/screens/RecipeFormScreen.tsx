@@ -11,7 +11,15 @@ import {
   X,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -90,8 +98,15 @@ export default function RecipeFormScreen({
   const currentPhoto = useRef<string | null>(null);
   const dirty = useRef(false);
   const saved = useRef(false);
-  /** Key of the ingredient row that must grab the focus once it appears. */
+  /** Key of the ingredient or step row that must grab the focus once it appears. */
   const focusOnMount = useRef<number | null>(null);
+  const focusIfNew =
+    (key: number) => (input: React.ComponentRef<typeof TextInput> | null) => {
+      if (input && focusOnMount.current === key) {
+        focusOnMount.current = null;
+        input.focus();
+      }
+    };
 
   currentPhoto.current = photoPath;
 
@@ -467,12 +482,7 @@ export default function RecipeFormScreen({
         <View key={row.key} style={styles.ingredient}>
           <View style={styles.row}>
             <Input
-              ref={input => {
-                if (input && focusOnMount.current === row.key) {
-                  focusOnMount.current = null;
-                  input.focus();
-                }
-              }}
+              ref={focusIfNew(row.key)}
               style={styles.ingredientName}
               value={row.name}
               onChangeText={name => updateIngredient(row.key, { name })}
@@ -520,6 +530,7 @@ export default function RecipeFormScreen({
         variant="secondary"
         size="sm"
         style={styles.addButton}
+        keepKeyboard
         onPress={() => {
           const row = newIngredientRow();
           focusOnMount.current = row.key;
@@ -534,6 +545,7 @@ export default function RecipeFormScreen({
             <Text style={styles.stepNumberText}>{index + 1}</Text>
           </View>
           <Input
+            ref={focusIfNew(row.key)}
             style={styles.flex}
             value={row.text}
             onChangeText={text => updateStep(row.key, text)}
@@ -579,7 +591,12 @@ export default function RecipeFormScreen({
         variant="secondary"
         size="sm"
         style={styles.addButton}
-        onPress={() => edit(setSteps)([...steps, newStepRow()])}
+        keepKeyboard
+        onPress={() => {
+          const row = newStepRow();
+          focusOnMount.current = row.key;
+          edit(setSteps)([...steps, row]);
+        }}
       />
 
       <Text style={styles.label}>Photo</Text>

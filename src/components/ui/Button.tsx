@@ -36,6 +36,8 @@ type Props = {
   size?: Size;
   disabled?: boolean;
   loading?: boolean;
+  /** Leaves the keyboard open, for a press that moves the focus to a new field. */
+  keepKeyboard?: boolean;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
@@ -57,6 +59,7 @@ export default function Button({
   size = 'md',
   disabled = false,
   loading = false,
+  keepKeyboard = false,
   accessibilityLabel,
   style,
 }: Props) {
@@ -67,7 +70,9 @@ export default function Button({
     <Pressable
       onPress={() => {
         // Leaves the text field being edited, like a tap on empty space.
-        Keyboard.dismiss();
+        if (!keepKeyboard) {
+          Keyboard.dismiss();
+        }
         onPress();
       }}
       disabled={inactive}
